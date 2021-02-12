@@ -23,7 +23,7 @@ import multiprocessing
 
 from itertools import count
 from functools import wraps
-from concurrent.futures import CancelledError, TimeoutError
+from concurrent.futures import CancelledError, TimeoutError, InvalidStateError
 
 from pebble.common import ProcessExpired, ProcessFuture
 from pebble.common import launch_process, stop_process, SLEEP_UNIT
@@ -109,7 +109,10 @@ def _worker_handler(future, worker, pipe, timeout):
         if isinstance(result, ProcessExpired):
             result.exitcode = worker.exitcode
 
-        future.set_exception(result)
+        try:
+            future.set_exception(result)
+        except InvalidStateError:
+            pass
     else:
         future.set_result(result)
 
